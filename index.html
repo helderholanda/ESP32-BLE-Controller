@@ -1,105 +1,183 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
+
 <meta charset="UTF-8">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta name="theme-color" content="#1976d2">
+
+<link rel="manifest" href="manifest.json">
 
 <title>ESP32 BLE Controller</title>
 
 <style>
 
 *{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial,Helvetica,sans-serif;
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,Helvetica,sans-serif;
 }
 
 body{
 
-    background:#181818;
-    color:white;
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
-
-    height:100vh;
+background:#121212;
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
 
 }
 
-.card{
+.container{
 
-    width:350px;
-    background:#242424;
-    border-radius:20px;
-    padding:25px;
-    box-shadow:0 0 20px rgba(0,0,0,.4);
+width:360px;
+background:#1f1f1f;
+padding:25px;
+border-radius:18px;
+box-shadow:0 0 20px rgba(0,0,0,.4);
 
 }
 
 h1{
 
-    text-align:center;
-    margin-bottom:20px;
+text-align:center;
+margin-bottom:20px;
+font-size:28px;
 
 }
 
 .status{
 
-    margin:20px 0;
-    text-align:center;
-    font-size:18px;
+margin:15px 0;
+padding:10px;
+background:#2d2d2d;
+border-radius:10px;
+text-align:center;
+font-size:17px;
 
 }
 
 button{
 
-    width:100%;
-    padding:15px;
-    margin-top:15px;
-
-    border:none;
-    border-radius:12px;
-
-    font-size:17px;
-    cursor:pointer;
-
-    background:#2196F3;
-    color:white;
+width:100%;
+padding:15px;
+margin-top:15px;
+border:none;
+border-radius:12px;
+background:#1976d2;
+color:white;
+font-size:17px;
+cursor:pointer;
+transition:.2s;
 
 }
 
 button:hover{
 
-    background:#1976D2;
+background:#1565c0;
 
 }
 
-#controls{
+button:active{
 
-    display:none;
-
-}
-
-#disconnect{
-
-    background:#F44336;
+transform:scale(.98);
 
 }
 
-#disconnect:hover{
+button.red{
 
-    background:#D32F2F;
+background:#d32f2f;
 
 }
 
-.small{
+button.red:hover{
 
-    font-size:13px;
-    color:#aaa;
-    text-align:center;
-    margin-top:15px;
+background:#b71c1c;
+
+}
+
+button.green{
+
+background:#388e3c;
+
+}
+
+button.green:hover{
+
+background:#2e7d32;
+
+}
+
+button.orange{
+
+background:#ef6c00;
+
+}
+
+button.orange:hover{
+
+background:#e65100;
+
+}
+
+#controlScreen{
+
+display:none;
+
+}
+
+.info{
+
+font-size:14px;
+color:#bbbbbb;
+margin-top:20px;
+text-align:center;
+
+}
+
+footer{
+
+margin-top:25px;
+font-size:12px;
+color:#777;
+text-align:center;
+
+}
+
+.loader{
+
+width:28px;
+height:28px;
+border:4px solid #666;
+border-top:4px solid #2196f3;
+border-radius:50%;
+animation:spin 1s linear infinite;
+margin:20px auto;
+display:none;
+
+}
+
+@keyframes spin{
+
+0%{transform:rotate(0deg);}
+100%{transform:rotate(360deg);}
+
+}
+
+.connected{
+
+color:#66ff99;
+
+}
+
+.disconnected{
+
+color:#ff6666;
 
 }
 
@@ -109,49 +187,77 @@ button:hover{
 
 <body>
 
-<div class="card">
+<div class="container">
 
 <h1>ESP32 BLE</h1>
 
-<div id="connect">
+<div id="connectScreen">
 
-<div class="status" id="status">
+<div id="status" class="status disconnected">
+
 Desconectado
+
 </div>
+
+<div class="loader" id="loader"></div>
 
 <button onclick="connectBLE()">
-🔍 Procurar ESP32
+
+🔍 Procurar Dispositivo
+
 </button>
 
-<div class="small">
+<div class="info">
 
-Escolha seu ESP32 na lista.
-
-</div>
+Selecione seu ESP32 na lista Bluetooth.
 
 </div>
 
-<div id="controls">
+</div>
 
-<div class="status" id="deviceName">
+<div id="controlScreen">
+
+<div id="deviceName" class="status connected">
 
 Conectado
 
 </div>
 
-<button onclick="sendCommand('FAST_BLINK')">
+<button class="green"
+
+onclick="sendCommand('FAST_BLINK')">
 
 ⚡ Piscar Rápido
 
 </button>
 
-<button onclick="sendCommand('MORSE_SOS')">
+<button class="orange"
+
+onclick="sendCommand('MORSE_SOS')">
 
 📡 Morse SOS
 
 </button>
 
-<button id="disconnect" onclick="disconnectBLE()">
+<button
+
+onclick="sendCommand('LED_ON')">
+
+💡 Ligar LED
+
+</button>
+
+<button
+
+onclick="sendCommand('LED_OFF')">
+
+🌙 Desligar LED
+
+</button>
+
+<button class="red"
+
+onclick="disconnectBLE()">
 
 Desconectar
 
@@ -159,25 +265,46 @@ Desconectar
 
 </div>
 
+<footer>
+
+ESP32 BLE Controller v1.0
+
+</footer>
+
 </div>
 
 <script>
 
-let device;
-let server;
-let service;
-let characteristic;
+if('serviceWorker' in navigator){
 
-// UUIDs de exemplo
+window.addEventListener('load',()=>{
 
-const SERVICE_UUID = "12345678-1234-1234-1234-1234567890ab";
-const CHARACTERISTIC_UUID = "abcd1234-5678-1234-5678-abcdef123456";
+navigator.serviceWorker.register('sw.js');
+
+});
+
+}
+
+let device=null;
+let server=null;
+let service=null;
+let characteristic=null;
+
+const SERVICE_UUID="12345678-1234-1234-1234-1234567890ab";
+
+const CHARACTERISTIC_UUID="abcd1234-5678-1234-5678-abcdef123456";
+
+let reconnect=false;
 
 async function connectBLE(){
 
+document.getElementById("loader").style.display="block";
+
+document.getElementById("status").innerHTML="Procurando dispositivo...";
+
 try{
 
-device = await navigator.bluetooth.requestDevice({
+device=await navigator.bluetooth.requestDevice({
 
 acceptAllDevices:true,
 
@@ -186,28 +313,48 @@ optionalServices:[SERVICE_UUID]
 });
 
 device.addEventListener(
+
 'gattserverdisconnected',
+
 onDisconnected
+
 );
 
-server = await device.gatt.connect();
+server=await device.gatt.connect();
 
-service = await server.getPrimaryService(SERVICE_UUID);
+service=await server.getPrimaryService(
 
-characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+SERVICE_UUID
 
-document.getElementById("connect").style.display="none";
+);
 
-document.getElementById("controls").style.display="block";
+characteristic=
+
+await service.getCharacteristic(
+
+CHARACTERISTIC_UUID
+
+);
+
+document.getElementById("loader").style.display="none";
+
+document.getElementById("connectScreen").style.display="none";
+
+document.getElementById("controlScreen").style.display="block";
 
 document.getElementById("deviceName").innerHTML=
-"Conectado a:<br><b>"+device.name+"</b>";
+
+"Conectado a<br><b>"+device.name+"</b>";
+
+reconnect=true;
 
 }catch(e){
 
-alert(e);
+document.getElementById("loader").style.display="none";
 
-}
+document.getElementById("status").innerHTML="Desconectado";
+
+alert(e);
 
 }
 
@@ -215,25 +362,41 @@ async function sendCommand(command){
 
 if(!characteristic){
 
-alert("Não conectado.");
+alert("ESP32 não conectado.");
 
 return;
 
 }
 
-let encoder = new TextEncoder();
+try{
+
+const encoder=new TextEncoder();
 
 await characteristic.writeValue(
+
 encoder.encode(command)
+
 );
 
 console.log("Enviado:",command);
+
+showToast("Comando enviado: "+command);
+
+}catch(e){
+
+console.error(e);
+
+alert("Erro ao enviar comando.");
+
+}
 
 }
 
 function disconnectBLE(){
 
-if(device && device.gatt.connected){
+if(device){
+
+if(device.gatt.connected){
 
 device.gatt.disconnect();
 
@@ -241,17 +404,159 @@ device.gatt.disconnect();
 
 }
 
+}
+
 function onDisconnected(){
 
-document.getElementById("controls").style.display="none";
+document.getElementById("controlScreen").style.display="none";
 
-document.getElementById("connect").style.display="block";
+document.getElementById("connectScreen").style.display="block";
 
 document.getElementById("status").innerHTML="Desconectado";
 
+document.getElementById("status").className="status disconnected";
+
+device=null;
+server=null;
+service=null;
+characteristic=null;
+
+showToast("ESP32 desconectado.");
+
 }
+
+function showToast(text){
+
+let toast=document.getElementById("toast");
+
+if(!toast){
+
+toast=document.createElement("div");
+
+toast.id="toast";
+
+toast.style.position="fixed";
+
+toast.style.bottom="25px";
+
+toast.style.left="50%";
+
+toast.style.transform="translateX(-50%)";
+
+toast.style.background="#333";
+
+toast.style.color="white";
+
+toast.style.padding="14px 22px";
+
+toast.style.borderRadius="10px";
+
+toast.style.boxShadow="0 0 15px rgba(0,0,0,.3)";
+
+toast.style.transition=".3s";
+
+toast.style.opacity="0";
+
+toast.style.zIndex="9999";
+
+document.body.appendChild(toast);
+
+}
+
+toast.innerHTML=text;
+
+toast.style.opacity="1";
+
+setTimeout(()=>{
+
+toast.style.opacity="0";
+
+},2200);
+
+}
+
+async function reconnectDevice(){
+
+if(!reconnect) return;
+
+try{
+
+server=await device.gatt.connect();
+
+service=await server.getPrimaryService(
+
+SERVICE_UUID
+
+);
+
+characteristic=
+
+await service.getCharacteristic(
+
+CHARACTERISTIC_UUID
+
+);
+
+document.getElementById("connectScreen").style.display="none";
+
+document.getElementById("controlScreen").style.display="block";
+
+document.getElementById("deviceName").innerHTML=
+
+"Reconectado a<br><b>"+device.name+"</b>";
+
+showToast("Reconectado!");
+
+}catch(e){
+
+console.log("Reconexão falhou.");
+
+}
+
+}
+
+setInterval(()=>{
+
+if(device){
+
+if(!device.gatt.connected){
+
+reconnectDevice();
+
+}
+
+}
+
+},3000);
+
+window.addEventListener("beforeunload",()=>{
+
+if(device){
+
+if(device.gatt.connected){
+
+device.gatt.disconnect();
+
+}
+
+}
+
+});
+    /* ==========
+   FUTURAS FUNÇÕES
+   ========== */
+
+// Aqui adicionaremos leitura de sensores,
+// status do LED,
+// controle de GPIO,
+// bateria,
+// OTA,
+// etc.
+
+console.log("ESP32 BLE Controller iniciado.");
 
 </script>
 
 </body>
+
 </html>
