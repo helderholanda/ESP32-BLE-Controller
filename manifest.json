@@ -1,0 +1,17 @@
+{
+  "name": "ESP32 BLE Controller",
+  "short_name": "ESP32 BLE",
+  "description": "Controle dispositivos ESP32 via Bluetooth Low Energy.",
+  "lang": "pt-BR",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#121212",
+  "theme_color": "#1976d2",
+  "categories": [
+    "utilities",
+    "productivity",
+    "tools"
+  ]
+}
