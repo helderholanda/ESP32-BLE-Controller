@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ESP32 BLE Controller</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+
+    background:#181818;
+    color:white;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    height:100vh;
+
+}
+
+.card{
+
+    width:350px;
+    background:#242424;
+    border-radius:20px;
+    padding:25px;
+    box-shadow:0 0 20px rgba(0,0,0,.4);
+
+}
+
+h1{
+
+    text-align:center;
+    margin-bottom:20px;
+
+}
+
+.status{
+
+    margin:20px 0;
+    text-align:center;
+    font-size:18px;
+
+}
+
+button{
+
+    width:100%;
+    padding:15px;
+    margin-top:15px;
+
+    border:none;
+    border-radius:12px;
+
+    font-size:17px;
+    cursor:pointer;
+
+    background:#2196F3;
+    color:white;
+
+}
+
+button:hover{
+
+    background:#1976D2;
+
+}
+
+#controls{
+
+    display:none;
+
+}
+
+#disconnect{
+
+    background:#F44336;
+
+}
+
+#disconnect:hover{
+
+    background:#D32F2F;
+
+}
+
+.small{
+
+    font-size:13px;
+    color:#aaa;
+    text-align:center;
+    margin-top:15px;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<h1>ESP32 BLE</h1>
+
+<div id="connect">
+
+<div class="status" id="status">
+Desconectado
+</div>
+
+<button onclick="connectBLE()">
+🔍 Procurar ESP32
+</button>
+
+<div class="small">
+
+Escolha seu ESP32 na lista.
+
+</div>
+
+</div>
+
+<div id="controls">
+
+<div class="status" id="deviceName">
+
+Conectado
+
+</div>
+
+<button onclick="sendCommand('FAST_BLINK')">
+
+⚡ Piscar Rápido
+
+</button>
+
+<button onclick="sendCommand('MORSE_SOS')">
+
+📡 Morse SOS
+
+</button>
+
+<button id="disconnect" onclick="disconnectBLE()">
+
+Desconectar
+
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+let device;
+let server;
+let service;
+let characteristic;
+
+// UUIDs de exemplo
+
+const SERVICE_UUID = "12345678-1234-1234-1234-1234567890ab";
+const CHARACTERISTIC_UUID = "abcd1234-5678-1234-5678-abcdef123456";
+
+async function connectBLE(){
+
+try{
+
+device = await navigator.bluetooth.requestDevice({
+
+acceptAllDevices:true,
+
+optionalServices:[SERVICE_UUID]
+
+});
+
+device.addEventListener(
+'gattserverdisconnected',
+onDisconnected
+);
+
+server = await device.gatt.connect();
+
+service = await server.getPrimaryService(SERVICE_UUID);
+
+characteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+document.getElementById("connect").style.display="none";
+
+document.getElementById("controls").style.display="block";
+
+document.getElementById("deviceName").innerHTML=
+"Conectado a:<br><b>"+device.name+"</b>";
+
+}catch(e){
+
+alert(e);
+
+}
+
+}
+
+async function sendCommand(command){
+
+if(!characteristic){
+
+alert("Não conectado.");
+
+return;
+
+}
+
+let encoder = new TextEncoder();
+
+await characteristic.writeValue(
+encoder.encode(command)
+);
+
+console.log("Enviado:",command);
+
+}
+
+function disconnectBLE(){
+
+if(device && device.gatt.connected){
+
+device.gatt.disconnect();
+
+}
+
+}
+
+function onDisconnected(){
+
+document.getElementById("controls").style.display="none";
+
+document.getElementById("connect").style.display="block";
+
+document.getElementById("status").innerHTML="Desconectado";
+
+}
+
+</script>
+
+</body>
+</html>
